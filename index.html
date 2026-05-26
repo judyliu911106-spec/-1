@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="飲食紀錄">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3565/3565418.png">
+    <link class="rounded-xl" rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3565/3565418.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -27,7 +27,7 @@
         .border-sage { border-color: #8A9A8B; }
         .border-mauve { border-color: #9B8E94; }
         
-        /* 隱藏原生 checkbox，用自訂樣式做出更溫柔的莫蘭迪風勾選框 */
+        /* 自訂莫蘭迪風勾選框 */
         .custom-checkbox:checked + label {
             background-color: #8A9A8B;
             color: white;
@@ -130,12 +130,11 @@
     </nav>
 
     <script>
-        // === 已自動內嵌您專屬的 Supabase 設定 ===
         const SUPABASE_URL = 'https://lpwbvqalnouufpldufae.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwd2J2cWFsbm91dWZwbGR1ZmFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MDQxODgsImV4cCI6MjA5NTM4MDE4OH0.ZNjhiXqMtKSp9pVv9cjM-UJGnB7HH_8j3qpm4CJdBiE';
         
-        // ✨ 已修正：這裡移除了非法的 @ 符號，改用標準的瀏覽器呼叫方式
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // ✨ 已修正：改用 db 作為變數名稱，徹底解決與官方 SDK 撞名的問題
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // 取得今天日期的字串格式 (YYYY-MM-DD)
         const getTodayString = () => {
@@ -164,10 +163,11 @@
 
         navHistory.addEventListener('click', () => {
             pageRecord.classList.add('hidden');
+            pageHistory.flex-row;
             pageHistory.classList.remove('hidden');
             navRecord.className = "flex flex-col items-center gap-1 text-stone-400";
             navHistory.className = "flex flex-col items-center gap-1 text-mauve";
-            fetchLogsByDate(); // 切換到歷史頁面時，自動抓取資料
+            fetchLogsByDate();
         });
 
         // --- 資料庫：新增紀錄 ---
@@ -178,16 +178,15 @@
             const logDate = document.getElementById('inputDate').value;
             const content = document.getElementById('content').value;
             
-            // 取得所有被勾選的種類，並用「、」串接起來（例如：午餐、飲料）
             const checkedBoxes = document.querySelectorAll('input[name="mealType"]:checked');
             if (checkedBoxes.length === 0) {
-                alert('請至少勾選一個種類（如：早餐、飲料等）喔！');
+                alert('請至少勾選一個種類喔！');
                 return;
             }
             const mealTypesArray = Array.from(checkedBoxes).map(cb => cb.value);
             const mealTypeCombined = mealTypesArray.join('、');
 
-            const { error } = await supabase
+            const { error } = await db
                 .from('diet_logs')
                 .insert([{ log_date: logDate, meal_type: mealTypeCombined, content: content }]);
 
@@ -196,9 +195,7 @@
             } else {
                 alert('✨ 紀錄成功！');
                 document.getElementById('content').value = '';
-                // 清空所有的勾選框
                 checkedBoxes.forEach(cb => cb.checked = false);
-                // 自動幫篩選器同步為剛才填寫的日期
                 document.getElementById('filterDate').value = logDate;
             }
         });
@@ -213,7 +210,7 @@
 
             logsContainer.innerHTML = `<p class="text-center text-stone-400 py-6 text-sm">正在讀取日誌...</p>`;
 
-            const { data, error } = await supabase
+            const { data, error } = await db
                 .from('diet_logs')
                 .select('*')
                 .eq('log_date', selectedDate)
@@ -231,7 +228,6 @@
 
             // 渲染日誌卡片
             logsContainer.innerHTML = data.map(log => {
-                // 根據餐別包含字眼，給予莫蘭迪左邊條配色
                 const isDrinkOnly = log.meal_type === '飲料';
                 const borderClass = isDrinkOnly ? 'border-mauve' : 'border-sage';
                 const labelBg = isDrinkOnly ? 'bg-stone-200/60 text-stone-700' : 'bg-stone-100 text-stone-600';
@@ -249,10 +245,8 @@
             }).join('');
         }
 
-        // 監聽日期選取器變更事件
         filterDateInput.addEventListener('change', fetchLogsByDate);
 
-        // 「今天」快捷鍵按鈕
         document.getElementById('btnToday').addEventListener('click', () => {
             filterDateInput.value = getTodayString();
             fetchLogsByDate();
