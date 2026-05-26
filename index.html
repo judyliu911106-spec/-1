@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Harmony Diet Journal</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8A9A8B">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="飲食紀錄">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3565/3565418.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body {
+            background-color: #F5F2ED; /* 奶油底色 */
+            color: #4A4E51;            /* 炭灰文字 */
+        }
+        .color-sage { background-color: #8A9A8B; }      /* 鼠尾草綠 */
+        .color-mauve { background-color: #9B8E94; }     /* 豆沙紅 */
+        .text-mauve { color: #9B8E94; }
+        .text-sage { color: #8A9A8B; }
+        .border-sage { border-color: #8A9A8B; }
+        .border-mauve { border-color: #9B8E94; }
+    </style>
+</head>
+<body class="min-h-screen pb-24 font-sans antialiased">
+
+    <div class="max-w-md mx-auto px-4 pt-6">
+        
+        <header class="text-center mb-6">
+            <h1 class="text-2xl font-bold tracking-wide text-mauve">Harmony Diet Journal</h1>
+            <p class="text-xs text-gray-400 mt-1">用溫柔調色盤，紀錄每日的平衡</p>
+        </header>
+
+        <div id="page-record" class="space-y-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100">
+                <h2 class="text-lg font-medium mb-4 flex items-center gap-2">
+                    <span class="w-2 h-5 color-sage rounded-full"></span> 新增飲食日誌
+                </h2>
+                
+                <form id="dietForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-stone-500 mb-1">紀錄日期</label>
+                        <input type="date" id="inputDate" required class="w-full rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#8A9A8B]">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-stone-500 mb-1">餐別</label>
+                        <select id="mealType" class="w-full rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#8A9A8B]">
+                            <option value="早餐">🌅 早餐</option>
+                            <option value="午餐">☀️ 午餐</option>
+                            <option value="晚餐">🌌 晚餐</option>
+                            <option value="點心">🍪 點心 / 其他</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-stone-500 mb-1">飲食內容</label>
+                        <textarea id="content" required rows="3" placeholder="今天吃了些什麼呢？" class="w-full rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#8A9A8B]"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-stone-500 mb-1">預估熱量 (kcal) <span class="text-gray-300">(選填)</span></label>
+                        <input type="number" id="calories" placeholder="例如：450" class="w-full rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#8A9A8B]">
+                    </div>
+
+                    <button type="submit" class="w-full color-sage hover:bg-[#79897A] text-white font-medium p-3 rounded-xl transition duration-200 shadow-sm mt-2">
+                        儲存至日誌
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div id="page-history" class="space-y-4 hidden">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 space-y-3">
+                <label class="block text-xs font-medium text-stone-500">依日期篩選紀錄</label>
+                <div class="flex gap-2">
+                    <input type="date" id="filterDate" class="flex-1 rounded-xl border border-stone-200 bg-stone-50 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#9B8E94]">
+                    <button id="btnToday" class="px-3 bg-stone-100 hover:bg-stone-200 rounded-xl text-xs font-medium transition">
+                        今天
+                    </button>
+                </div>
+                <div class="pt-2 border-t border-stone-100 flex justify-between items-center text-xs text-stone-500">
+                    <span>當日攝取總熱量：</span>
+                    <span id="totalCalories" class="font-bold text-base text-mauve">0 kcal</span>
+                </div>
+            </div>
+
+            <div id="logsContainer" class="space-y-3">
+                </div>
+        </div>
+
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-stone-200/60 pb-5 pt-2 shadow-lg">
+        <div class="max-w-md mx-auto flex justify-around">
+            <button id="nav-record" class="flex flex-col items-center gap-1 text-sage">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+                <span class="text-xs font-medium">填寫紀錄</span>
+            </button>
+
+            <button id="nav-history" class="flex flex-col items-center gap-1 text-stone-400">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.03 0 1.9.693 2.166 1.638m-7.377 0A48.536 48.536 0 0112 3m0 0c2.917 0 5.747.294 8.5.862m-21 10.394c0-1.135.845-2.098 1.976-2.192a48.424 48.424 0 011.123-.08M3.108 18c2.917 0 5.747-.294 8.5-.862m0 0V4.5m0 13.5v-3" />
+                </svg>
+                <span class="text-xs font-medium">歷史查看</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // === 已自動內嵌您專屬的 Supabase 設定 ===
+        const SUPABASE_URL = 'https://lpwbvqalnouufpldufae.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwd2J2cWFsbm91dWZwbGR1ZmFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MDQxODgsImV4cCI6MjA5NTM4MDE4OH0.ZNjhiXqMtKSp9pVv9cjM-UJGnB7HH_8j3qpm4CJdBiE';
+        
+        const supabase = @supabase/supabase-js.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 取得今天日期的字串格式 (YYYY-MM-DD)
+        const getTodayString = () => {
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const localDate = new Date(now.getTime() - (offset * 60 * 1000));
+            return localDate.toISOString().split('T')[0];
+        };
+
+        // 初始化頁面預設日期
+        document.getElementById('inputDate').value = getTodayString();
+        document.getElementById('filterDate').value = getTodayString();
+
+        // --- 頁面切換控制 (Tab Switch) ---
+        const pageRecord = document.getElementById('page-record');
+        const pageHistory = document.getElementById('page-history');
+        const navRecord = document.getElementById('nav-record');
+        const navHistory = document.getElementById('nav-history');
+
+        navRecord.addEventListener('click', () => {
+            pageRecord.classList.remove('hidden');
+            pageHistory.classList.add('hidden');
+            navRecord.className = "flex flex-col items-center gap-1 text-sage";
+            navHistory.className = "flex flex-col items-center gap-1 text-stone-400";
+        });
+
+        navHistory.addEventListener('click', () => {
+            pageRecord.classList.add('hidden');
+            pageHistory.classList.remove('hidden');
+            navRecord.className = "flex flex-col items-center gap-1 text-stone-400";
+            navHistory.className = "flex flex-col items-center gap-1 text-mauve";
+            fetchLogsByDate(); // 切換到歷史頁面時，自動抓取資料
+        });
+
+        // --- 資料庫：新增紀錄 ---
+        const dietForm = document.getElementById('dietForm');
+        dietForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const logDate = document.getElementById('inputDate').value;
+            const mealType = document.getElementById('mealType').value;
+            const content = document.getElementById('content').value;
+            const calories = document.getElementById('calories').value ? parseInt(document.getElementById('calories').value) : null;
+
+            const { error } = await supabase
+                .from('diet_logs')
+                .insert([{ log_date: logDate, meal_type: mealType, content: content, calories: calories }]);
+
+            if (error) {
+                alert('儲存失敗，請檢查：' + error.message);
+            } else {
+                alert('✨ 紀錄成功！');
+                document.getElementById('content').value = '';
+                document.getElementById('calories').value = '';
+                // 自動幫篩選器同步為剛才填寫的日期，方便過去查看
+                document.getElementById('filterDate').value = logDate;
+            }
+        });
+
+        // --- 資料庫：依日期篩選讀取 ---
+        const filterDateInput = document.getElementById('filterDate');
+        const logsContainer = document.getElementById('logsContainer');
+        const totalCaloriesEl = document.getElementById('totalCalories');
+
+        async function fetchLogsByDate() {
+            const selectedDate = filterDateInput.value;
+            if (!selectedDate) return;
+
+            logsContainer.innerHTML = `<p class="text-center text-stone-400 py-6 text-sm">正在讀取大地脈絡...</p>`;
+
+            const { data, error } = await supabase
+                .from('diet_logs')
+                .select('*')
+                .eq('log_date', selectedDate)
+                .order('created_at', { ascending: true });
+
+            if (error) {
+                logsContainer.innerHTML = `<p class="text-red-400 text-sm text-center py-4">讀取失敗：${error.message}</p>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                logsContainer.innerHTML = `<p class="text-center text-stone-400 py-12 text-sm">這天還沒有留下任何飲食足跡喔 🌿</p>`;
+                totalCaloriesEl.innerText = "0 kcal";
+                return;
+            }
+
+            // 計算當日總熱量
+            const sumCalories = data.reduce((sum, log) => sum + (log.calories || 0), 0);
+            totalCaloriesEl.innerText = `${sumCalories} kcal`;
+
+            // 渲染日誌卡片
+            logsContainer.innerHTML = data.map(log => {
+                // 根據餐別給予莫蘭迪左邊條配色
+                const borderClass = (log.meal_type === '早餐' || log.meal_type === '午餐') ? 'border-sage' : 'border-mauve';
+                const labelBg = (log.meal_type === '早餐' || log.meal_type === '午餐') ? 'bg-stone-100 text-stone-600' : 'bg-stone-200/60 text-stone-700';
+
+                return `
+                    <div class="bg-white p-4 rounded-xl border-l-4 ${borderClass} shadow-sm border-y border-r border-stone-100 flex justify-between items-start transition hover:translate-x-0.5 duration-200">
+                        <div class="space-y-1.5 flex-1 pr-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 ${labelBg} text-[11px] font-medium rounded-md">${log.meal_type}</span>
+                            </div>
+                            <p class="text-stone-700 text-sm leading-relaxed whitespace-pre-line">${log.content}</p>
+                        </div>
+                        ${log.calories ? `<span class="text-xs font-semibold text-stone-500 bg-stone-50 px-2 py-1 rounded-lg">${log.calories} kcal</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 監聽日期選取器變更事件
+        filterDateInput.addEventListener('change', fetchLogsByDate);
+
+        // 「今天」快捷鍵按鈕
+        document.getElementById('btnToday').addEventListener('click', () => {
+            filterDateInput.value = getTodayString();
+            fetchLogsByDate();
+        });
+    </script>
+</body>
+</html>

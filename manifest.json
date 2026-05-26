@@ -1,0 +1,15 @@
+{
+  "short_name": "飲食紀錄",
+  "name": "Harmony Diet Journal",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3565/3565418.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F5F2ED",
+  "theme_color": "#8A9A8B"
+}
