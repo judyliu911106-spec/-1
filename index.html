@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="飲食紀錄">
-    <link class="rounded-xl" rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3565/3565418.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3565/3565418.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -58,26 +58,38 @@
 
                     <div>
                         <label class="block text-xs font-medium text-stone-500 mb-2">種類 (可複選)</label>
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="grid grid-cols-3 gap-2">
                             <div>
                                 <input type="checkbox" name="mealType" value="早餐" id="meal-breakfast" class="hidden custom-checkbox">
-                                <label for="meal-breakfast" class="block text-center border border-stone-200 bg-stone-50 p-2.5 rounded-xl text-sm font-medium text-stone-600 cursor-pointer transition">🌅 早餐</label>
+                                <label for="meal-breakfast" class="block text-center border border-stone-200 bg-stone-50 p-2 rounded-xl text-xs font-medium text-stone-600 cursor-pointer transition select-none">🌅 早餐</label>
                             </div>
                             <div>
                                 <input type="checkbox" name="mealType" value="午餐" id="meal-lunch" class="hidden custom-checkbox">
-                                <label for="meal-lunch" class="block text-center border border-stone-200 bg-stone-50 p-2.5 rounded-xl text-sm font-medium text-stone-600 cursor-pointer transition">☀️ 午餐</label>
+                                <label for="meal-lunch" class="block text-center border border-stone-200 bg-stone-50 p-2 rounded-xl text-xs font-medium text-stone-600 cursor-pointer transition select-none">☀️ 午餐</label>
                             </div>
                             <div>
                                 <input type="checkbox" name="mealType" value="晚餐" id="meal-dinner" class="hidden custom-checkbox">
-                                <label for="meal-dinner" class="block text-center border border-stone-200 bg-stone-50 p-2.5 rounded-xl text-sm font-medium text-stone-600 cursor-pointer transition">🌌 晚餐</label>
+                                <label for="meal-dinner" class="block text-center border border-stone-200 bg-stone-50 p-2 rounded-xl text-xs font-medium text-stone-600 cursor-pointer transition select-none">🌌 晚餐</label>
                             </div>
                             <div>
                                 <input type="checkbox" name="mealType" value="飲料" id="meal-drink" class="hidden custom-checkbox">
-                                <label for="meal-drink" class="block text-center border border-stone-200 bg-stone-50 p-2.5 rounded-xl text-sm font-medium text-stone-600 cursor-pointer transition">🥤 飲料</label>
+                                <label for="meal-drink" class="block text-center border border-stone-200 bg-stone-50 p-2 rounded-xl text-xs font-medium text-stone-600 cursor-pointer transition select-none">🥤 飲料</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" name="mealType" value="點心" id="meal-snack" class="hidden custom-checkbox">
+                                <label for="meal-snack" class="block text-center border border-stone-200 bg-stone-50 p-2 rounded-xl text-xs font-medium text-stone-600 cursor-pointer transition select-none">🍪 點心</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" name="mealType" value="甜食" id="meal-sweet" class="hidden custom-checkbox">
+                                <label for="meal-sweet" class="block text-center border border-stone-200 bg-stone-50 p-2 rounded-xl text-xs font-medium text-stone-600 cursor-pointer transition select-none">🍫 甜食</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" name="mealType" value="油炸" id="meal-fried" class="hidden custom-checkbox">
+                                <label for="meal-fried" class="block text-center border border-stone-200 bg-stone-50 p-2 rounded-xl text-xs font-medium text-stone-600 cursor-pointer transition select-none">🍟 油炸</label>
                             </div>
                             <div class="col-span-2">
-                                <input type="checkbox" name="mealType" value="點心/其他" id="meal-snack" class="hidden custom-checkbox">
-                                <label for="meal-snack" class="block text-center border border-stone-200 bg-stone-50 p-2.5 rounded-xl text-sm font-medium text-stone-600 cursor-pointer transition">🍪 點心 / 其他</label>
+                                <input type="checkbox" name="mealType" value="其他" id="meal-other" class="hidden custom-checkbox">
+                                <label for="meal-other" class="block text-center border border-stone-200 bg-stone-50 p-2 rounded-xl text-xs font-medium text-stone-600 cursor-pointer transition select-none">🌿 其他</label>
                             </div>
                         </div>
                     </div>
@@ -133,7 +145,6 @@
         const SUPABASE_URL = 'https://lpwbvqalnouufpldufae.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwd2J2cWFsbm91dWZwbGR1ZmFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MDQxODgsImV4cCI6MjA5NTM4MDE4OH0.ZNjhiXqMtKSp9pVv9cjM-UJGnB7HH_8j3qpm4CJdBiE';
         
-        // ✨ 已修正：改用 db 作為變數名稱，徹底解決與官方 SDK 撞名的問題
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // 取得今天日期的字串格式 (YYYY-MM-DD)
@@ -144,7 +155,7 @@
             return localDate.toISOString().split('T')[0];
         };
 
-        // 初始化頁面預設日期
+        // 初始化頁面預設日期（兩邊皆預設今天）
         document.getElementById('inputDate').value = getTodayString();
         document.getElementById('filterDate').value = getTodayString();
 
@@ -163,11 +174,10 @@
 
         navHistory.addEventListener('click', () => {
             pageRecord.classList.add('hidden');
-            pageHistory.flex-row;
             pageHistory.classList.remove('hidden');
             navRecord.className = "flex flex-col items-center gap-1 text-stone-400";
             navHistory.className = "flex flex-col items-center gap-1 text-mauve";
-            fetchLogsByDate();
+            fetchLogsByDate(); // 切換時自動載入選定日期的紀錄
         });
 
         // --- 資料庫：新增紀錄 ---
@@ -196,7 +206,7 @@
                 alert('✨ 紀錄成功！');
                 document.getElementById('content').value = '';
                 checkedBoxes.forEach(cb => cb.checked = false);
-                document.getElementById('filterDate').value = logDate;
+                document.getElementById('filterDate').value = logDate; // 日期同步
             }
         });
 
@@ -228,9 +238,10 @@
 
             // 渲染日誌卡片
             logsContainer.innerHTML = data.map(log => {
-                const isDrinkOnly = log.meal_type === '飲料';
-                const borderClass = isDrinkOnly ? 'border-mauve' : 'border-sage';
-                const labelBg = isDrinkOnly ? 'bg-stone-200/60 text-stone-700' : 'bg-stone-100 text-stone-600';
+                // 判斷是否包含罪惡食物（油炸、甜食、飲料），給予特殊莫蘭迪紅框提示
+                const isGuilty = log.meal_type.includes('油炸') || log.meal_type.includes('甜食') || log.meal_type === '飲料';
+                const borderClass = isGuilty ? 'border-mauve' : 'border-sage';
+                const labelBg = isGuilty ? 'bg-stone-200/60 text-stone-700' : 'bg-stone-100 text-stone-600';
 
                 return `
                     <div class="bg-white p-4 rounded-xl border-l-4 ${borderClass} shadow-sm border-y border-r border-stone-100 flex justify-between items-start transition hover:translate-x-0.5 duration-200">
