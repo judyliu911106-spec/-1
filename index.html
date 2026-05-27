@@ -24,8 +24,6 @@
         .color-mauve { background-color: #9B8E94; }     /* 豆沙紅 */
         .text-mauve { color: #9B8E94; }
         .text-sage { color: #8A9A8B; }
-        .border-sage { border-color: #8A9A8B; }
-        .border-mauve { border-color: #9B8E94; }
         
         /* 自訂莫蘭迪風勾選框 */
         .custom-checkbox:checked + label {
@@ -33,11 +31,17 @@
             color: white;
             border-color: #8A9A8B;
         }
-        /* 特殊屬性標籤（甜食、油炸、飲料）勾選時用豆沙紅區隔 */
         .badge-checkbox:checked + label {
             background-color: #9B8E94;
             color: white;
             border-color: #9B8E94;
+        }
+
+        /* 修正日期欄位爆出去的問題 */
+        input[type="date"] {
+            box-sizing: border-box;
+            appearance: none;
+            -webkit-appearance: none;
         }
     </style>
 </head>
@@ -59,7 +63,9 @@
                 <form id="dietForm" class="space-y-4">
                     <div>
                         <label class="block text-xs font-medium text-stone-500 mb-1.5">紀錄日期</label>
-                        <input type="date" id="inputDate" required class="w-full rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#8A9A8B]">
+                        <div class="w-full">
+                            <input type="date" id="inputDate" required class="w-full block rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#8A9A8B] box-border">
+                        </div>
                     </div>
 
                     <div class="space-y-3 bg-stone-50/60 p-3 rounded-xl border border-stone-100">
@@ -126,8 +132,8 @@
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 space-y-3">
                 <label class="block text-xs font-medium text-stone-500">依日期篩選紀錄</label>
                 <div class="flex gap-2">
-                    <input type="date" id="filterDate" class="flex-1 rounded-xl border border-stone-200 bg-stone-50 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#9B8E94]">
-                    <button id="btnToday" class="px-3 bg-stone-100 hover:bg-stone-200 rounded-xl text-xs font-medium transition">
+                    <input type="date" id="filterDate" class="flex-1 min-w-0 rounded-xl border border-stone-200 bg-stone-50 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#9B8E94] box-border">
+                    <button id="btnToday" class="px-4 bg-stone-100 hover:bg-stone-200 rounded-xl text-xs font-medium transition shrink-0">
                         今天
                     </button>
                 </div>
@@ -159,11 +165,10 @@
 
     <script>
         const SUPABASE_URL = 'https://lpwbvqalnouufpldufae.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwd2J2cWFsbm91dWZwbGR1ZmFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MDQxODgsImV4cCI6MjA5NTM4MDE4OH0.ZNjhiXqMtKSp9pVv9cjM-UJGnB7HH_8j3qpm4CJdBiE';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwd2J2cWFsbm91dWZwbGR1ZmFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MD4xODgsImV4cCI6MjA5NTM4MDE4OH0.ZNjhiXqMtKSp9pVv9cjM-UJGnB7HH_8j3qpm4CJdBiE';
         
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // 取得今天日期的字串格式 (YYYY-MM-DD)
         const getTodayString = () => {
             const now = new Date();
             const offset = now.getTimezoneOffset();
@@ -171,11 +176,10 @@
             return localDate.toISOString().split('T')[0];
         };
 
-        // 初始化頁面預設日期
         document.getElementById('inputDate').value = getTodayString();
         document.getElementById('filterDate').value = getTodayString();
 
-        // --- 頁面切換控制 (Tab Switch) ---
+        // 頁面切換
         const pageRecord = document.getElementById('page-record');
         const pageHistory = document.getElementById('page-history');
         const navRecord = document.getElementById('nav-record');
@@ -196,7 +200,7 @@
             fetchLogsByDate();
         });
 
-        // --- 資料庫：新增紀錄 ---
+        // 新增紀錄
         const dietForm = document.getElementById('dietForm');
         dietForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -204,7 +208,6 @@
             const logDate = document.getElementById('inputDate').value;
             const content = document.getElementById('content').value;
             
-            // 1. 取得餐別勾選
             const checkedMeals = document.querySelectorAll('input[name="mealType"]:checked');
             if (checkedMeals.length === 0) {
                 alert('請至少勾選一個「主要餐別」喔！');
@@ -212,11 +215,9 @@
             }
             const mealsArray = Array.from(checkedMeals).map(cb => cb.value);
             
-            // 2. 取得食物屬性勾選（可不選）
             const checkedFeatures = document.querySelectorAll('input[name="foodFeature"]:checked');
             const featuresArray = Array.from(checkedFeatures).map(cb => cb.value);
             
-            // 合併兩者，最終儲存格式如：「午餐、甜食、油炸」
             const finalTagsArray = [...mealsArray, ...featuresArray];
             const mealTypeCombined = finalTagsArray.join('、');
 
@@ -229,14 +230,25 @@
             } else {
                 alert('✨ 紀錄成功！');
                 document.getElementById('content').value = '';
-                // 清空所有勾選框
                 checkedMeals.forEach(cb => cb.checked = false);
                 checkedFeatures.forEach(cb => cb.checked = false);
                 document.getElementById('filterDate').value = logDate;
             }
         });
 
-        // --- 資料庫：依日期篩選讀取 ---
+        // 定義色彩調色盤（對應標籤與邊條顏色）
+        const colorPalette = {
+            '早餐': { bg: 'bg-[#E6DCD0]', text: 'text-[#7A6F5D]', border: '#E6DCD0' }, // 晨光黃
+            '午餐': { bg: 'bg-[#EAD5C3]', text: 'text-[#8C5E38]', border: '#EAD5C3' }, // 日曬橘
+            '晚餐': { bg: 'bg-[#D2DCD6]', text: 'text-[#4A6456]', border: '#D2DCD6' }, // 暮色藍
+            '點心': { bg: 'bg-[#DECFC7]', text: 'text-[#7D5C4C]', border: '#DECFC7' }, // 可可棕
+            '飲料': { bg: 'bg-[#EADCC9]', text: 'text-[#946B38]', border: '#EADCC9' }, // 泰奶橘
+            '甜食': { bg: 'bg-[#EAD1DC]', text: 'text-[#964B6B]', border: '#EAD1DC' }, // 芭比粉
+            '油炸': { bg: 'bg-[#EAE3CD]', text: 'text-[#877437]', border: '#EAE3CD' }, // 芥末黃
+            '其他': { bg: 'bg-[#D9E2D5]', text: 'text-[#5A6E53]', border: '#D9E2D5' }  // 草本綠
+        };
+
+        // 依日期篩選讀取
         const filterDateInput = document.getElementById('filterDate');
         const logsContainer = document.getElementById('logsContainer');
 
@@ -262,20 +274,29 @@
                 return;
             }
 
-            // 渲染日誌卡片
+            // 渲染彩色日誌卡片
             logsContainer.innerHTML = data.map(log => {
-                // 如果勾選標籤含有「油炸、甜食、飲料」，顯示代表稍微放縱的莫蘭迪豆沙紅外框
-                const isGuilty = log.meal_type.includes('油炸') || log.meal_type.includes('甜食') || log.meal_type.includes('飲料');
-                const borderClass = isGuilty ? 'border-mauve' : 'border-sage';
-                const labelBg = isGuilty ? 'bg-stone-200/60 text-stone-700' : 'bg-stone-100 text-stone-600';
+                // 將儲存的字串（如 "午餐、甜食"）拆回陣列
+                const tags = log.meal_type.split('、');
+                
+                // 動態生成多色小標籤 HTML
+                const tagsHtml = tags.map(tag => {
+                    const style = colorPalette[tag] || { bg: 'bg-stone-100', text: 'text-stone-600' };
+                    return `<span class="px-2 py-0.5 ${style.bg} ${style.text} text-[11px] font-medium rounded-md shadow-sm"># ${tag}</span>`;
+                }).join(' ');
+
+                // 根據第一個和最後一個標籤，做成精緻的漸層邊條
+                const firstColor = colorPalette[tags[0]]?.border || '#8A9A8B';
+                const lastColor = colorPalette[tags[tags.length - 1]]?.border || '#8A9A8B';
+                const borderStyle = `border-image: linear-gradient(to bottom, ${firstColor}, ${lastColor}) 1; border-left-width: 4px;`;
 
                 return `
-                    <div class="bg-white p-4 rounded-xl border-l-4 ${borderClass} shadow-sm border-y border-r border-stone-100 flex justify-between items-start transition hover:translate-x-0.5 duration-200">
-                        <div class="space-y-1.5 flex-1 pr-2">
-                            <div class="flex items-center gap-2">
-                                <span class="px-2 py-0.5 ${labelBg} text-[11px] font-medium rounded-md">${log.meal_type}</span>
+                    <div style="${borderStyle}" class="bg-white p-4 rounded-r-xl shadow-sm border-y border-r border-stone-100/70 flex justify-between items-start transition hover:translate-x-0.5 duration-200">
+                        <div class="space-y-2 flex-1 pr-2">
+                            <div class="flex flex-wrap gap-1.5">
+                                ${tagsHtml}
                             </div>
-                            <p class="text-stone-700 text-sm leading-relaxed whitespace-pre-line">${log.content}</p>
+                            <p class="text-stone-700 text-sm leading-relaxed whitespace-pre-line font-normal">${log.content}</p>
                         </div>
                     </div>
                 `;
