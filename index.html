@@ -60,7 +60,7 @@
                     <span class="w-2 h-5 color-sage rounded-full"></span> 新增飲食日誌
                 </h2>
                 
-                <form id="dietForm" class="space-y-4">
+                <form id="dietForm" class="space-y-4" onsubmit="return false;">
                     <div>
                         <label class="block text-xs font-medium text-stone-500 mb-1.5">紀錄日期</label>
                         <div class="w-full">
@@ -121,7 +121,7 @@
                         <textarea id="content" required rows="4" placeholder="今天吃了、喝了些什麼呢？" class="w-full rounded-xl border border-stone-200 bg-stone-50 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#8A9A8B]"></textarea>
                     </div>
 
-                    <button type="submit" class="w-full color-sage hover:bg-[#79897A] text-white font-medium p-3 rounded-xl transition duration-200 shadow-sm mt-2">
+                    <button id="btnSubmit" type="button" class="w-full color-sage hover:bg-[#79897A] text-white font-medium p-3 rounded-xl transition duration-200 shadow-sm mt-2">
                         儲存至日誌
                     </button>
                 </form>
@@ -133,7 +133,7 @@
                 <label class="block text-xs font-medium text-stone-500">依日期篩選紀錄</label>
                 <div class="flex gap-2">
                     <input type="date" id="filterDate" class="flex-1 min-w-0 rounded-xl border border-stone-200 bg-stone-50 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#9B8E94] box-border">
-                    <button id="btnToday" class="px-4 bg-stone-100 hover:bg-stone-200 rounded-xl text-xs font-medium transition shrink-0">
+                    <button id="btnToday" type="button" class="px-4 bg-stone-100 hover:bg-stone-200 rounded-xl text-xs font-medium transition shrink-0">
                         今天
                     </button>
                 </div>
@@ -147,14 +147,14 @@
 
     <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-stone-200/60 pb-5 pt-2 shadow-lg">
         <div class="max-w-md mx-auto flex justify-around">
-            <button id="nav-record" class="flex flex-col items-center gap-1 text-sage">
+            <button id="nav-record" type="button" class="flex flex-col items-center gap-1 text-sage">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                 </svg>
                 <span class="text-xs font-medium">填寫紀錄</span>
             </button>
 
-            <button id="nav-history" class="flex flex-col items-center gap-1 text-stone-400">
+            <button id="nav-history" type="button" class="flex flex-col items-center gap-1 text-stone-400">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.03 0 1.9.693 2.166 1.638m-7.377 0A48.536 48.536 0 0112 3m0 0c2.917 0 5.747.294 8.5.862m-21 10.394c0-1.135.845-2.098 1.976-2.192a48.424 48.424 0 011.123-.08M3.108 18c2.917 0 5.747-.294 8.5-.862m0 0V4.5m0 13.5v-3" />
                 </svg>
@@ -179,20 +179,22 @@
         document.getElementById('inputDate').value = getTodayString();
         document.getElementById('filterDate').value = getTodayString();
 
-        // 頁面切換
+        // 頁面切換控制
         const pageRecord = document.getElementById('page-record');
         const pageHistory = document.getElementById('page-history');
         const navRecord = document.getElementById('nav-record');
         const navHistory = document.getElementById('nav-history');
 
-        navRecord.addEventListener('click', () => {
+        navRecord.addEventListener('click', (e) => {
+            e.preventDefault();
             pageRecord.classList.remove('hidden');
             pageHistory.classList.add('hidden');
             navRecord.className = "flex flex-col items-center gap-1 text-sage";
             navHistory.className = "flex flex-col items-center gap-1 text-stone-400";
         });
 
-        navHistory.addEventListener('click', () => {
+        navHistory.addEventListener('click', (e) => {
+            e.preventDefault();
             pageRecord.classList.add('hidden');
             pageHistory.classList.remove('hidden');
             navRecord.className = "flex flex-col items-center gap-1 text-stone-400";
@@ -200,14 +202,18 @@
             fetchLogsByDate();
         });
 
-        // 新增紀錄
-        const dietForm = document.getElementById('dietForm');
-        dietForm.addEventListener('submit', async (e) => {
+        // 新增紀錄（改用普通按鈕點擊事件，徹底避免表單重新整理問題）
+        document.getElementById('btnSubmit').addEventListener('click', async (e) => {
             e.preventDefault();
             
             const logDate = document.getElementById('inputDate').value;
             const content = document.getElementById('content').value;
             
+            if (!content.trim()) {
+                alert('請填寫飲食內容喔！');
+                return;
+            }
+
             const checkedMeals = document.querySelectorAll('input[name="mealType"]:checked');
             if (checkedMeals.length === 0) {
                 alert('請至少勾選一個「主要餐別」喔！');
@@ -236,16 +242,16 @@
             }
         });
 
-        // 定義色彩調色盤（對應標籤與邊條顏色）
+        // 定義色彩調色盤
         const colorPalette = {
-            '早餐': { bg: 'bg-[#E6DCD0]', text: 'text-[#7A6F5D]', border: '#E6DCD0' }, // 晨光黃
-            '午餐': { bg: 'bg-[#EAD5C3]', text: 'text-[#8C5E38]', border: '#EAD5C3' }, // 日曬橘
-            '晚餐': { bg: 'bg-[#D2DCD6]', text: 'text-[#4A6456]', border: '#D2DCD6' }, // 暮色藍
-            '點心': { bg: 'bg-[#DECFC7]', text: 'text-[#7D5C4C]', border: '#DECFC7' }, // 可可棕
-            '飲料': { bg: 'bg-[#EADCC9]', text: 'text-[#946B38]', border: '#EADCC9' }, // 泰奶橘
-            '甜食': { bg: 'bg-[#EAD1DC]', text: 'text-[#964B6B]', border: '#EAD1DC' }, // 芭比粉
-            '油炸': { bg: 'bg-[#EAE3CD]', text: 'text-[#877437]', border: '#EAE3CD' }, // 芥末黃
-            '其他': { bg: 'bg-[#D9E2D5]', text: 'text-[#5A6E53]', border: '#D9E2D5' }  // 草本綠
+            '早餐': { bg: 'bg-[#E6DCD0]', text: 'text-[#7A6F5D]', border: '#E6DCD0' },
+            '午餐': { bg: 'bg-[#EAD5C3]', text: 'text-[#8C5E38]', border: '#EAD5C3' },
+            '晚餐': { bg: 'bg-[#D2DCD6]', text: 'text-[#4A6456]', border: '#D2DCD6' },
+            '點心': { bg: 'bg-[#DECFC7]', text: 'text-[#7D5C4C]', border: '#DECFC7' },
+            '飲料': { bg: 'bg-[#EADCC9]', text: 'text-[#946B38]', border: '#EADCC9' },
+            '甜食': { bg: 'bg-[#EAD1DC]', text: 'text-[#964B6B]', border: '#EAD1DC' },
+            '油炸': { bg: 'bg-[#EAE3CD]', text: 'text-[#877437]', border: '#EAE3CD' },
+            '其他': { bg: 'bg-[#D9E2D5]', text: 'text-[#5A6E53]', border: '#D9E2D5' }
         };
 
         // 依日期篩選讀取
@@ -274,18 +280,14 @@
                 return;
             }
 
-            // 渲染彩色日誌卡片
             logsContainer.innerHTML = data.map(log => {
-                // 將儲存的字串（如 "午餐、甜食"）拆回陣列
                 const tags = log.meal_type.split('、');
                 
-                // 動態生成多色小標籤 HTML
                 const tagsHtml = tags.map(tag => {
                     const style = colorPalette[tag] || { bg: 'bg-stone-100', text: 'text-stone-600' };
                     return `<span class="px-2 py-0.5 ${style.bg} ${style.text} text-[11px] font-medium rounded-md shadow-sm"># ${tag}</span>`;
                 }).join(' ');
 
-                // 根據第一個和最後一個標籤，做成精緻的漸層邊條
                 const firstColor = colorPalette[tags[0]]?.border || '#8A9A8B';
                 const lastColor = colorPalette[tags[tags.length - 1]]?.border || '#8A9A8B';
                 const borderStyle = `border-image: linear-gradient(to bottom, ${firstColor}, ${lastColor}) 1; border-left-width: 4px;`;
@@ -305,7 +307,8 @@
 
         filterDateInput.addEventListener('change', fetchLogsByDate);
 
-        document.getElementById('btnToday').addEventListener('click', () => {
+        document.getElementById('btnToday').addEventListener('click', (e) => {
+            e.preventDefault();
             filterDateInput.value = getTodayString();
             fetchLogsByDate();
         });
